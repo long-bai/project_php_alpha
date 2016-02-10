@@ -35,6 +35,7 @@ class DefaultController extends Controller
     	$eventDispatcher->dispatch(	'testevent.testevent', $event
     			);
     	// [...]
+    	echo 'test';
     	return $this->render('default/index.html.twig', [
     			'base_dir' => realpath($this->container->getParameter('kernel.root_dir').'/..'),
     	]);
