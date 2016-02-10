@@ -36,6 +36,7 @@ class DefaultController extends Controller
     			);
     	// [...]
     	echo 'test';
+    	var_dump($event);die();
     	return $this->render('default/index.html.twig', [
     			'base_dir' => realpath($this->container->getParameter('kernel.root_dir').'/..'),
     	]);
