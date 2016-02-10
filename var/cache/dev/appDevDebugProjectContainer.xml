@@ -16,6 +16,8 @@
       <parameter key="DoctrineBundle">Doctrine\Bundle\DoctrineBundle\DoctrineBundle</parameter>
       <parameter key="SensioFrameworkExtraBundle">Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle</parameter>
       <parameter key="AppBundle">AppBundle\AppBundle</parameter>
+      <parameter key="SncRedisBundle">Snc\RedisBundle\SncRedisBundle</parameter>
+      <parameter key="TestEveBundle">TestEveBundle\TestEveBundle</parameter>
       <parameter key="DebugBundle">Symfony\Bundle\DebugBundle\DebugBundle</parameter>
       <parameter key="WebProfilerBundle">Symfony\Bundle\WebProfilerBundle\WebProfilerBundle</parameter>
       <parameter key="SensioDistributionBundle">Sensio\Bundle\DistributionBundle\SensioDistributionBundle</parameter>
@@ -300,6 +302,19 @@
     <parameter key="sensio_framework_extra.converter.doctrine.class">Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter</parameter>
     <parameter key="sensio_framework_extra.converter.datetime.class">Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DateTimeParamConverter</parameter>
     <parameter key="sensio_framework_extra.view.listener.class">Sensio\Bundle\FrameworkExtraBundle\EventListener\TemplateListener</parameter>
+    <parameter key="snc_redis.client.class">Predis\Client</parameter>
+    <parameter key="snc_redis.client_options.class">Predis\Configuration\Options</parameter>
+    <parameter key="snc_redis.connection_parameters.class">Predis\Connection\Parameters</parameter>
+    <parameter key="snc_redis.connection_factory.class">Snc\RedisBundle\Client\Predis\Connection\ConnectionFactory</parameter>
+    <parameter key="snc_redis.connection_wrapper.class">Snc\RedisBundle\Client\Predis\Connection\ConnectionWrapper</parameter>
+    <parameter key="snc_redis.phpredis_client.class">Redis</parameter>
+    <parameter key="snc_redis.phpredis_connection_wrapper.class">Snc\RedisBundle\Client\Phpredis\Client</parameter>
+    <parameter key="snc_redis.logger.class">Snc\RedisBundle\Logger\RedisLogger</parameter>
+    <parameter key="snc_redis.data_collector.class">Snc\RedisBundle\DataCollector\RedisDataCollector</parameter>
+    <parameter key="snc_redis.doctrine_cache_phpredis.class">Doctrine\Common\Cache\RedisCache</parameter>
+    <parameter key="snc_redis.doctrine_cache_predis.class">Doctrine\Common\Cache\PredisCache</parameter>
+    <parameter key="snc_redis.monolog_handler.class">Monolog\Handler\RedisHandler</parameter>
+    <parameter key="snc_redis.swiftmailer_spool.class">Snc\RedisBundle\SwiftMailer\RedisSpool</parameter>
     <parameter key="web_profiler.debug_toolbar.position">bottom</parameter>
     <parameter key="web_profiler.debug_toolbar.intercept_redirects">false</parameter>
     <parameter key="web_profiler.debug_toolbar.mode">2</parameter>
@@ -359,6 +374,10 @@
       <parameter key="data_collector.dump" type="collection">
         <parameter>dump</parameter>
         <parameter>@Debug/Profiler/dump.html.twig</parameter>
+      </parameter>
+      <parameter key="snc_redis.data_collector" type="collection">
+        <parameter>redis</parameter>
+        <parameter>SncRedisBundle:Collector:redis</parameter>
       </parameter>
       <parameter key="data_collector.config" type="collection">
         <parameter>config</parameter>
@@ -1197,6 +1216,14 @@
       </call>
       <call method="add">
         <argument type="service">
+          <service class="Snc\RedisBundle\DataCollector\RedisDataCollector" public="false">
+            <tag name="data_collector" template="SncRedisBundle:Collector:redis" id="redis"/>
+            <argument type="service" id="snc_redis.logger"/>
+          </service>
+        </argument>
+      </call>
+      <call method="add">
+        <argument type="service">
           <service class="Symfony\Component\HttpKernel\DataCollector\ConfigDataCollector" public="false">
             <tag name="data_collector" template="@WebProfiler/Collector/config.html.twig" id="config" priority="-255"/>
             <call method="setKernel">
@@ -1473,7 +1500,7 @@
       <argument type="collection">
         <argument type="service">
           <service class="Symfony\Component\Security\Core\Authentication\Provider\AnonymousAuthenticationProvider" public="false">
-            <argument>56aa82eeb6e533.66316028</argument>
+            <argument>56abd7d56eb033.59596113</argument>
           </service>
         </argument>
       </argument>
@@ -1602,7 +1629,7 @@
         <argument type="service">
           <service class="Symfony\Component\Security\Http\Firewall\AnonymousAuthenticationListener" public="false">
             <argument type="service" id="security.token_storage"/>
-            <argument>56aa82eeb6e533.66316028</argument>
+            <argument>56abd7d56eb033.59596113</argument>
             <argument type="service" id="monolog.logger.security" on-invalid="null"/>
             <argument type="service" id="security.authentication.manager"/>
           </service>
@@ -2086,6 +2113,10 @@
       <argument type="service" id="security.token_storage" on-invalid="null"/>
       <argument type="service" id="security.authorization_checker" on-invalid="null"/>
     </service>
+    <service id="snc_redis.logger" class="Snc\RedisBundle\Logger\RedisLogger">
+      <tag name="monolog.logger" channel="snc_redis"/>
+      <argument type="service" id="monolog.logger.snc_redis" on-invalid="null"/>
+    </service>
     <service id="data_collector.dump" class="Symfony\Component\HttpKernel\DataCollector\DumpDataCollector">
       <tag name="data_collector" id="dump" template="@Debug/Profiler/dump.html.twig" priority="240"/>
       <argument type="service" id="debug.stopwatch" on-invalid="ignore"/>
@@ -2171,6 +2202,10 @@
         <argument key="data_collector.dump" type="collection">
           <argument>dump</argument>
           <argument>@Debug/Profiler/dump.html.twig</argument>
+        </argument>
+        <argument key="snc_redis.data_collector" type="collection">
+          <argument>redis</argument>
+          <argument>SncRedisBundle:Collector:redis</argument>
         </argument>
         <argument key="data_collector.config" type="collection">
           <argument>config</argument>
@@ -2302,6 +2337,18 @@
         <argument type="service" id="monolog.handler.debug"/>
       </call>
     </service>
+    <service id="monolog.logger.snc_redis" class="Symfony\Bridge\Monolog\Logger">
+      <argument>snc_redis</argument>
+      <call method="pushHandler">
+        <argument type="service" id="monolog.handler.console"/>
+      </call>
+      <call method="pushHandler">
+        <argument type="service" id="monolog.handler.main"/>
+      </call>
+      <call method="pushHandler">
+        <argument type="service" id="monolog.handler.debug"/>
+      </call>
+    </service>
     <service id="monolog.handler.debug" class="Symfony\Bridge\Monolog\Handler\DebugHandler">
       <argument>100</argument>
       <argument>true</argument>
@@ -2383,6 +2430,14 @@
       <call method="addPath">
         <argument>D:\git\project_php_alpha\vendor\doctrine\doctrine-bundle/Resources/views</argument>
         <argument>Doctrine</argument>
+      </call>
+      <call method="addPath">
+        <argument>D:\git\project_php_alpha\vendor\snc\redis-bundle/Resources/views</argument>
+        <argument>SncRedis</argument>
+      </call>
+      <call method="addPath">
+        <argument>D:\git\project_php_alpha\src\TestEveBundle/Resources/views</argument>
+        <argument>TestEve</argument>
       </call>
       <call method="addPath">
         <argument>D:\git\project_php_alpha\vendor\symfony\symfony\src\Symfony\Bundle\DebugBundle/Resources/views</argument>
@@ -2470,6 +2525,20 @@
         <argument>null</argument>
       </call>
     </service>
+    <service id="snc_redis.default" class="Snc\RedisBundle\Client\Phpredis\Client">
+      <argument type="collection">
+        <argument key="alias">default</argument>
+      </argument>
+      <argument type="service" id="snc_redis.logger"/>
+      <call method="connect">
+        <argument>localhost</argument>
+        <argument>6379</argument>
+        <argument>5</argument>
+      </call>
+      <call method="select">
+        <argument>1</argument>
+      </call>
+    </service>
     <service id="session.storage" alias="session.storage.native"/>
     <service id="event_dispatcher" alias="debug.event_dispatcher"/>
     <service id="swiftmailer.spool" alias="swiftmailer.mailer.default.spool"/>
@@ -2483,6 +2552,7 @@
     <service id="doctrine.orm.default_metadata_cache" alias="doctrine_cache.providers.doctrine.orm.default_metadata_cache"/>
     <service id="doctrine.orm.default_result_cache" alias="doctrine_cache.providers.doctrine.orm.default_result_cache"/>
     <service id="doctrine.orm.default_query_cache" alias="doctrine_cache.providers.doctrine.orm.default_query_cache"/>
+    <service id="snc_redis.default_client" alias="snc_redis.default"/>
     <service id="console.command.sensiolabs_security_command_securitycheckercommand" alias="sensio_distribution.security_checker.command"/>
   </services>
 </container>
