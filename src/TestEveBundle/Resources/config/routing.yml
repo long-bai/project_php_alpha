@@ -1,0 +1,3 @@
+test_eve_homepage:
+    path:     /
+    defaults: { _controller: TestEveBundle:Default:index }
