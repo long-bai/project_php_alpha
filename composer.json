@@ -30,7 +30,8 @@
     },
     "require-dev": {
         "sensiolabs/security-checker": "^5.0",
-        "symfony/phpunit-bridge": "^4.1"
+        "symfony/phpunit-bridge": "^4.1",
+        "phpunit/phpunit": "^8.4"
     },
     "scripts": {
         "post-install-cmd": [
