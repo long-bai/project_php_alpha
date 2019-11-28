@@ -13,7 +13,7 @@ build:
     tests:
         override:
             -
-                command: cd /home/scrutinizer/build/project_php_alpha && vendor/bin/phpunit --coverage-clover=clover.xml
+                command: vendor/bin/phpunit --coverage-clover=clover.xml
                 coverage:
                     file: project_php_alpha/clover.xml
                     format: php-clover
