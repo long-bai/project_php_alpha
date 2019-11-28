@@ -1,0 +1,28 @@
+# Note: The on_node are kept here as references. Only usefull when running
+# with multiple container (not available with the current plan)
+
+filter:
+    excluded_paths:
+        - '*/app'
+        - '*/vendor'
+        - '*/web'
+        - '*/tests'
+        - '*/var'
+
+build:
+    tests:
+        override:
+            -
+                command: vendor/bin/phpunit --coverage-clover=clover.xml
+                coverage:
+                    file: clover.xml
+                    format: clover
+
+
+# Segfault ///
+#            -
+#                command: cd /home/scrutinizer/build/babylone-orders && vendor/bin/phpunit --exclude-group=notravis --coverage-clover=clover.xml
+#                coverage:
+#                    file: babylone-orders/clover.xml
+#                    format: php-clover
+#                on_node: 9
